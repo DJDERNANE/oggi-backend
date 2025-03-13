@@ -58,7 +58,7 @@ class DestinationResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\VisasRelationManager::class,
         ];
     }
 
