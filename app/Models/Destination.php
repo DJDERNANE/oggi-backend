@@ -21,4 +21,9 @@ class Destination extends Model
         'code',
     ];
 
+    public function visas()
+    {
+        return $this->hasMany(VisaType::class);
+    }
+
 }
