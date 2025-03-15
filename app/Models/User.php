@@ -22,6 +22,11 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
+        'role',
+        'email_verified_at',
+        'phone_verified_at',
+        'steps',
     ];
 
     /**
@@ -45,5 +50,15 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function visaApplications()
+    {
+        return $this->hasMany(VisaApplication::class);
+    }
+
+    public function otpCodes()
+    {
+        return $this->hasMany(OtpCode::class);
     }
 }
