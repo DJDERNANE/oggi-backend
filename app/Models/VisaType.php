@@ -18,4 +18,9 @@ class VisaType extends Model
     {
         return $this->belongsTo(Destination::class);
     }
+
+    public function visasApplications()
+    {
+        return $this->hasMany(VisaApplication::class);
+    }
 }

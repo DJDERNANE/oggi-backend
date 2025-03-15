@@ -33,11 +33,13 @@ class VisaController extends Controller
             return response()->json([
                 "data" => [
                     "adult" => [
+                        "visa_type_id" => $visa->id,
                         "unit_price" => $visa->adult_price,
                         "count" => $adults,
                         "documents" => $visa->documents ?? [], 
                     ],
                     "child" => [
+                        "visa_type_id" => $visa->id,
                         "unit_price" => $visa->child_price,
                         "count" => $children,
                         "documents" => $visa->documents ?? [], 
@@ -64,5 +66,5 @@ class VisaController extends Controller
 
         return response()->json(["data" => ["adults" => $adults, "children" => $children, "total" => $total]]);
     }
-    
+
 }
