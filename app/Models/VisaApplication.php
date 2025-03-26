@@ -29,4 +29,10 @@ class VisaApplication extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+
+    public function visaType()
+    {
+        return $this->belongsTo(VisaType::class);
+    }
 }

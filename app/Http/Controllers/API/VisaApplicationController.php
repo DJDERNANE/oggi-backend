@@ -27,30 +27,27 @@ class VisaApplicationController extends Controller
 
     public function store(Request $request)
     {
+       
+    
         try {
-            // Validate request
-            $request->validate([
-                'applications' => 'required|array|min:1', // Ensure at least one application is submitted
-                'applications.*.name' => 'required|string',
-                'applications.*.fammily_name' => 'required|string',
-                'applications.*.passport_number' => 'required|string',
-                'applications.*.departure_date' => 'required|date',
-                'applications.*.visa_type_id' => 'required|exists:visa_types,id',
-                'applications.*.files.*' => 'file|max:2048', // Each file max 2MB
-            ]);
-
             $userId = auth()->id();
             $visaApplications = [];
-
+    
             // Process each visa application
-            foreach ($request->applications as $applicationData) {
+            foreach ($request->applications as $index => $applicationData) {
+                // logger($request->applicationData['files']); // Log full request for debugging
+                // Check if the required fields exist
+                if (!isset($applicationData['name'], $applicationData['fammily_name'], $applicationData['passport_number'], $applicationData['departure_date'], $applicationData['visa_type_id'])) {
+                    return response()->json(["error" => "Missing required fields for application index $index"], 400);
+                }
+    
+                // Find the visa type
                 $visa = VisaType::find($applicationData['visa_type_id']);
-
                 if (!$visa) {
                     return response()->json(["error" => "Visa type ID {$applicationData['visa_type_id']} not found."], 404);
                 }
-
-                // Create visa application entry
+    
+                // Create visa application
                 $visaApplication = VisaApplication::create([
                     'user_id' => $userId,
                     'name' => $applicationData['name'],
@@ -61,45 +58,41 @@ class VisaApplicationController extends Controller
                     'price' => $applicationData['price'] ?? 0,
                     'status' => 'pending',
                 ]);
-                logger("files ::: ");
-                logger($applicationData['files']);
-                if ($request->hasFile('files')) {
-                    logger("Files:");
-                    logger($request->file('files'));
-                    foreach ($request->file('files') as $index => $filesArray) {
-                        foreach ($filesArray as $file) {
-                            logger("File #{$index}:");
-                            logger([
-                                'original_name' => $file->getClientOriginalName(),
-                                'mime_type' => $file->getMimeType(),
-                                'size' => $file->getSize(),
-                            ]);
-                        }
-                    }
+    
+                // 🔍 **Debugging files array**
+                if (!isset($applicationData['files'])) {
+                    logger("No files key found for application index: $index");
+                } else {
+                    logger("Files for application index: $index", $applicationData['files']);
                 }
-                // Store uploaded files for this application
-                if (!empty($applicationData['files'])) {
+    
+                // **Handle file uploads**
+                if (!empty($applicationData['files']) && is_array($applicationData['files'])) {
                     foreach ($applicationData['files'] as $file) {
-                        try {
-                            $path = $file->store("visa_documents/{$userId}", 'public');
-
-                            VisaApplicationFile::create([
-                                'visa_application_id' => $visaApplication->id,
-                                'file_path' => $path,
-                                'name' => $file->getClientOriginalName(),
-                                'type' => $file->getClientMimeType(),
-                                'size' => $file->getSize(),
-                            ]);
-                        } catch (\Exception $e) {
-                            return response()->json(["error" => "Failed to upload files for {$applicationData['name']}."], 500);
+                        if ($file instanceof \Illuminate\Http\UploadedFile) {
+                            try {
+                                $path = $file->store("visa_documents/{$userId}", 'public');
+    
+                                VisaApplicationFile::create([
+                                    'visa_application_id' => $visaApplication->id,
+                                    'file_path' => $path,
+                                    'name' => $file->getClientOriginalName(),
+                                    'type' => $file->getClientMimeType(),
+                                    'size' => $file->getSize(),
+                                ]);
+                            } catch (\Exception $e) {
+                                return response()->json(["error" => "Failed to upload files for {$applicationData['name']}."], 500);
+                            }
+                        } else {
+                            logger("Invalid file format at index $index");
                         }
                     }
                 }
-
+    
                 // Store the application response
                 $visaApplications[] = $visaApplication;
             }
-
+    
             return response()->json([
                 "message" => "Visa applications submitted successfully.",
                 "applications" => $visaApplications
@@ -111,4 +104,5 @@ class VisaApplicationController extends Controller
             return response()->json(["error" => "An unexpected error occurred."], 500);
         }
     }
+    
 }

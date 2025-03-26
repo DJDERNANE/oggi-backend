@@ -14,7 +14,7 @@ class VisaType extends Model
         'documents' => 'array', // Ensures JSON data is converted to an array
     ];
 
-    public function destinations()
+    public function destination()
     {
         return $this->belongsTo(Destination::class);
     }
