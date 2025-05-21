@@ -7,13 +7,16 @@ Route::get('/', function () {
     return redirect('/admin');
 });
 
-Route::get('/storage/link', function (){
-    $targetFolder = '/home/oggitrav/oggi-panel/storage/app/public';
-    $linkFolder = '/home/oggitrav/oggi-panel/public/storage';
-    $link2Folder = '/home/oggitrav/public_html';
-    symlink($targetFolder,$linkFolder);
-    symlink($targetFolder,$link2Folder);
-    echo 'Symlink process successfully completed';
+Route::get('/storage/link', function () {
+    $target = '/home/oggitrav/oggi-panel/storage/app/public';
+    $link = '/home/oggitrav/public_html/storage';
+
+    if (!file_exists($link)) {
+        symlink($target, $link);
+        return 'Symlink created successfully in public_html.';
+    } else {
+        return 'Symlink already exists.';
+    }
 });
 
 
