@@ -23,14 +23,14 @@ Route::get('/storage/link', function () {
 
 Route::get('/file-preview', function () {
     $path = 'visas/01JVTF6KN6SWA91SXQQA60G5MQ.pdf';
-
-    if (!Storage::disk('public')->exists($path)) {
+    $fullPath = storage_path("app/public/{$path}");
+    
+    if (!file_exists($fullPath)) {
         abort(404);
     }
-
-    return response()->file(storage_path("app/public/{$path}"));
+    
+    return response()->file($fullPath);
 });
-
 Route::get('/login', function () {
     return response()->json(['message' => 'Login page']);
 })->name('login');
