@@ -2,35 +2,22 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\VisaApplicationController;
-use Illuminate\Support\Facades\Storage;
 
 Route::get('/', function () {
     return redirect('/admin');
 });
 
-Route::get('/storage/link', function () {
-    $target = storage_path('app/public');
-    $link = public_path('storage');
-
-    if (!file_exists($link)) {
-        symlink($target, $link);
-        return 'Symlink created';
-    } else {
-        return 'Symlink already exists';
-    }
+Route::get('/storage/link', function (){
+    $targetFolder = '/home/oggitrav/oggi-panel/storage/app/public';
+    $linkFolder = '/home/oggitrav/oggi-panel/public/storage';
+    $link2Folder = '/home/oggitrav/public_html';
+    symlink($targetFolder,$linkFolder);
+    symlink($targetFolder,$link2Folder);
+    echo 'Symlink process successfully completed';
 });
 
 
-Route::get('/file-preview', function () {
-    $path = 'visas/01JVTF6KN6SWA91SXQQA60G5MQ.pdf';
-    $fullPath = storage_path("app/public/{$path}");
-    
-    if (!file_exists($fullPath)) {
-        abort(404);
-    }
-    
-    return response()->file($fullPath);
-});
+
 Route::get('/login', function () {
     return response()->json(['message' => 'Login page']);
 })->name('login');
