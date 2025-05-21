@@ -11,7 +11,7 @@ class VisaController extends Controller
 {
     public function destinations()
     {
-        $destinations = Destination::select('id', 'name', 'code')->get();
+        $destinations = Destination::select('id', 'name', 'code', 'flag')->get();
         return response()->json(["data" => $destinations]);
     }
 

@@ -52,6 +52,7 @@ class User extends Authenticatable
         ];
     }
 
+
     public function visaApplications()
     {
         return $this->hasMany(VisaApplication::class);

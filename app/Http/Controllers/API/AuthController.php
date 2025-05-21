@@ -13,6 +13,7 @@ use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OtpSent;
+use App\Models\UserDoc;
 
 class AuthController extends Controller
 {
@@ -56,11 +57,9 @@ class AuthController extends Controller
                                     $nextStep = 5;
                                     break;
                                 case "step5":
-                                        $nextStep = 6;
+                                    $nextStep = 6;
                                 default:
                                     $nextStep = 6;
-                                    
-                
                             }
                             return response()->json([
                                 'user' => $user,
@@ -228,7 +227,7 @@ class AuthController extends Controller
                     if ($validator->fails()) {
                         return response()->json([
                             'messages' => $validator->errors(),
-                            ], 422);
+                        ], 422);
                     }
                     $user = User::where('email', $request->email)->where('phone', $request->phone)->first();
                     if ($user) {
@@ -240,6 +239,73 @@ class AuthController extends Controller
                         $user->password = Hash::make($request->password);
                         $user->steps = "completed";
                         $user->save();
+                        // Create user documents - FIXED SYNTAX
+                        $documents = [
+                            [
+                                "user_id" => $user->id,
+                                "type" => "main",
+                                "name" => "Passport"
+                            ],
+                            [
+                                "user_id" => $user->id,
+                                "type" => "main",
+                                "name" => "Carte National"
+                            ],
+                            [
+                                "user_id" => $user->id,
+                                "type" => "main",
+                                "name" => "Photo"
+                            ],
+                            [
+                                "user_id" => $user->id,
+                                "type" => "temporary",
+                                "name" => "Réservation"
+                            ],
+                            [
+                                "user_id" => $user->id,
+                                "type" => "temporary",
+                                "name" => "Ticket"
+                            ]
+                        ];
+
+                        foreach ($documents as $document) {
+                            try {
+                                $createdDoc = UserDoc::create($document);
+                                $createdDocuments[] = $createdDoc;
+
+                                // Log successful creation
+                                logger('User document created successfully', [
+                                    'document_id' => $createdDoc->id,
+                                    'user_id' => $user->id,
+                                    'type' => $document['type'],
+                                    'name' => $document['name']
+                                ]);
+                            } catch (\Exception $e) {
+                                $failedDocuments[] = [
+                                    'document' => $document,
+                                    'error' => $e->getMessage()
+                                ];
+
+                                // Log the error
+                                logger('Failed to create user document', [
+                                    'user_id' => $user->id,
+                                    'error' => $e->getMessage(),
+                                    'document' => $document,
+                                    'trace' => $e->getTraceAsString()
+                                ]);
+                            }
+                        }
+
+                        // Optionally handle failed documents
+                        if (!empty($failedDocuments)) {
+                           logger('Some documents failed to create', [
+                                'user_id' => $user->id,
+                                'failed_count' => count($failedDocuments),
+                                'failed_documents' => $failedDocuments
+                            ]);
+
+                            // You could also notify admin or take other actions here
+                        }
                         $token = $user->createToken('authToken')->plainTextToken;
                         return response()->json([
                             'user' => $user,

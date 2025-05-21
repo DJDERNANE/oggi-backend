@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\VisaApplication;
 use ZipArchive;
@@ -45,4 +46,6 @@ class VisaApplicationController extends Controller
 
         return response()->download($zipFilePath)->deleteFileAfterSend(true);
     }
+
+   
 }

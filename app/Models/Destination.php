@@ -19,6 +19,7 @@ class Destination extends Model
         'name',
         'description',
         'code',
+        'flag'
     ];
 
     public function visas()

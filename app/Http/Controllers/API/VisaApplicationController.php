@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\VisaApplication;
 use App\Models\VisaApplicationFile;
 use App\Models\VisaType;
+use App\Models\User;
 
 class VisaApplicationController extends Controller
 {
@@ -19,10 +20,11 @@ class VisaApplicationController extends Controller
         }
 
         $visaApplications = VisaApplication::where('user_id', $user->id)
-            ->with('visaApplicationFiles') // Assuming you have a relationship with files
+            ->with('visaApplicationFiles', 'visaType', 'visaType.destination') // Assuming you have a relationship with files
             ->get();
-
-        return response()->json(["data" => $visaApplications]);
+            logger($visaApplications);
+        $visaCount = $visaApplications->count();
+        return response()->json(["data" => $visaApplications, "visaCount" => $visaCount]);
     }
 
     public function store(Request $request)
@@ -104,5 +106,6 @@ class VisaApplicationController extends Controller
             return response()->json(["error" => "An unexpected error occurred."], 500);
         }
     }
+
     
 }

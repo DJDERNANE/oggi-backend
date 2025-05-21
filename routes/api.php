@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\VisaController;
 use App\Http\Controllers\API\VisaApplicationController;
+use App\Http\Controllers\API\UserDocsController;
 
 Route::group(['middleware' => 'auth:sanctum'], function () {
 
@@ -16,9 +17,15 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     // visa application routes 
     Route::post('/visa-applications', [VisaApplicationController::class, 'store']);
     Route::get('/visa-applications', [VisaApplicationController::class, 'index']);
+    Route::get("/my-visas", [VisaApplicationController::class, 'myVisas']);
     // Route::get('/visa-applications/{id}', [VisaApplicationController::class, 'show']);
     // Route::get('/visa-applications/{id}/files', [VisaAplicationFileController::class, 'index']);
     // Route::post('/visa-applications/{id}/files', [VisaAplicationFileController::class, 'store']);
+
+    // 
+    Route::get("/my-docs", [UserDocsController::class, 'mainUserDocs']);
+    Route::post("/my-docs", [UserDocsController::class, 'updateUserDoc']);
+    Route::get("/my-docs/download", [UserDocsController::class, 'zipAndDownload']);
 });
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);

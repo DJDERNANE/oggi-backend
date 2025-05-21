@@ -2,9 +2,10 @@
 
 namespace App\Filament\Resources;
 
-use App\Filament\Resources\DestinationResource\Pages;
-use App\Filament\Resources\DestinationResource\RelationManagers;
-use App\Models\Destination;
+use App\Filament\Resources\UserResource\Pages;
+use App\Filament\Resources\UserResource\RelationManagers;
+use App\Models\User;
+use App\Models\VisaApplication;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -13,9 +14,9 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
-class DestinationResource extends Resource
+class UserResource extends Resource
 {
-    protected static ?string $model = Destination::class;
+    protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
@@ -24,17 +25,16 @@ class DestinationResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
-                ->required()
-                ->maxLength(255),
-            Forms\Components\TextInput::make('code')
-                ->required()
-                ->maxLength(255),
-            Forms\Components\TextInput::make('description')
-                ->maxLength(255),
-                Forms\Components\FileUpload::make('flag')
-                ->label('Upload country Flag')
-                ->directory('flags') // stored in storage/app/visas
-                ->disk('public') // optional: default disk
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('email')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('phone')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\DateTimePicker::make('email_verified_at'),
+                Forms\Components\DatePicker::make('phone_verified_at'),
             ]);
     }
 
@@ -43,8 +43,10 @@ class DestinationResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name'),
-                Tables\Columns\TextColumn::make('code'),
-                Tables\Columns\TextColumn::make('description')
+                Tables\Columns\TextColumn::make('email'),
+                Tables\Columns\TextColumn::make('phone'),
+                Tables\Columns\TextColumn::make('visaApplications.count')
+                ->label('Pending Visa Applications')
             ])
             ->filters([
                 //
@@ -62,16 +64,18 @@ class DestinationResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\VisasRelationManager::class,
+            RelationManagers\VisaApplicationRelationManager::class
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListDestinations::route('/'),
-            'create' => Pages\CreateDestination::route('/create'),
-            'edit' => Pages\EditDestination::route('/{record}/edit'),
+            'index' => Pages\ListUsers::route('/'),
+            'create' => Pages\CreateUser::route('/create'),
+            'edit' => Pages\EditUser::route('/{record}/edit'),
         ];
     }
+
+    
 }

@@ -12,6 +12,9 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 
 class VisaApplicationResource extends Resource
 {
@@ -41,7 +44,29 @@ class VisaApplicationResource extends Resource
                         'approved' => 'Approved',
                         'rejected' => 'Rejected',
                         'action_required' => 'Action Required',
-                    ]),
+
+                    ])->reactive(),
+
+                Forms\Components\FileUpload::make('visa_file')
+                    ->label('Upload Visa')
+                    ->directory('visas') // stored in storage/app/visas
+                    ->disk('public') // optional: default disk
+                    ->visible(fn($get) => $get('status') === 'approved'),
+                // Repeater for dynamic document key-value pairs
+                Repeater::make('required_documents')
+                    ->schema([
+                        TextInput::make('document_name')
+                            ->label('Document Name')
+                            ->required(),
+
+                        Toggle::make('required')
+                            ->label('Required')
+                            ->default(false),
+                    ])
+                    ->addActionLabel('Add Document') // Custom button text
+                    ->collapsible()
+                    ->required()->visible(fn($get) => $get('status') === 'action_required'),
+
                 Forms\Components\TextInput::make('price'),
                 Forms\Components\TextInput::make('destination_name')
                     ->disabled()

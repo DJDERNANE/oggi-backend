@@ -18,6 +18,8 @@ class VisaApplication extends Model
         'user_id',
         'status',
         'price',  
+        'visa_file',
+        'required_documents',
     ];
 
     public function visaApplicationFiles()
@@ -34,5 +36,10 @@ class VisaApplication extends Model
     public function visaType()
     {
         return $this->belongsTo(VisaType::class);
+    }
+
+    public function count()
+    {
+        return $this->where('status', 'pending')->count();
     }
 }
