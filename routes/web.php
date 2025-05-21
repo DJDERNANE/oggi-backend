@@ -8,8 +8,8 @@ Route::get('/', function () {
 });
 
 Route::get('/storage/link', function (){
-    $targetFolder = $_SERVER['DOCUMENT_ROOT'].'/storage/app/public';
-    $linkFolder = $_SERVER['DOCUMENT_ROOT'].'/public/storage';
+    $targetFolder = '/home/oggitrav/oggi-panel/storage/app/public';
+    $linkFolder = '/home/oggitrav/oggi-panel/public/storage';
     symlink($targetFolder,$linkFolder);
     echo 'Symlink process successfully completed';
 });
