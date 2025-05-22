@@ -23,7 +23,8 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     // Route::post('/visa-applications/{id}/files', [VisaAplicationFileController::class, 'store']);
 
     // 
-    Route::get("/my-docs", [UserDocsController::class, 'mainUserDocs']);
+    Route::get("/my-docs/main", [UserDocsController::class, 'mainUserDocs']);
+    Route::get("/my-docs/temporary", [UserDocsController::class, 'temporaryUserDocs']);
     Route::post("/my-docs", [UserDocsController::class, 'updateUserDoc']);
     Route::get("/my-docs/download", [UserDocsController::class, 'zipAndDownload']);
 });

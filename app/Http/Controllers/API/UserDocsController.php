@@ -10,10 +10,25 @@ use Illuminate\Support\Facades\Storage;
 use ZipArchive;
 class UserDocsController extends Controller
 {
-    public function mainUserDocs(Request $request)
+    public function mainUserDocs()
     {
         try {
-            $userDocs = UserDoc::where('user_id', auth()->id())->where('type',  $request->type)->get();
+            $userDocs = UserDoc::where('user_id', auth()->id())->where('type',  'main')->get();
+
+            return response()->json(["data" => $userDocs], 200);
+        } catch (\Exception $e) {
+            // Log the error
+            logger('Failed to cget user document', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+    }
+
+    public function temporaryUserDocs()
+    {
+        try {
+            $userDocs = UserDoc::where('user_id', auth()->id())->where('type',  'temporary')->get();
 
             return response()->json(["data" => $userDocs], 200);
         } catch (\Exception $e) {
