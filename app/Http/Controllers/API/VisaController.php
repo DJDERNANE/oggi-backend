@@ -9,10 +9,12 @@ use App\Models\VisaType;
 
 class VisaController extends Controller
 {
-    public function destinations()
+    public function destinations(Request $request)
     {
-        $destinations = Destination::select('id', 'name', 'code', 'flag')->get();
-        return response()->json(["data" => $destinations]);
+        $perPage = $request->input('per_page', 9); // default to 10 per page
+        $destinations = Destination::select('id', 'name', 'code', 'flag')->paginate($perPage);
+    
+        return response()->json($destinations);
     }
 
     public function visasTypes($id)
