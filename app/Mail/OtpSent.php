@@ -31,7 +31,7 @@ class OtpSent extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            from: new Address('noreply@oggitravel.com', 'Oggi Travel'),
+            from: new Address('no-reply@oggi-travel.com', 'Oggi Travel'),
             subject: 'Otp confirmation',
            
         );
