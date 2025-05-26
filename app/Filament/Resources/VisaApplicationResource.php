@@ -20,7 +20,14 @@ class VisaApplicationResource extends Resource
 {
     protected static ?string $model = VisaApplication::class;
 
+    protected static ?int $navigationSort = 1;
+
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::query()->where('status', 'pending')->count();
+    }
 
     public static function form(Form $form): Form
     {
@@ -108,8 +115,12 @@ class VisaApplicationResource extends Resource
                 Tables\Columns\TextColumn::make('passport_number'),
                 Tables\Columns\TextColumn::make('departure_date'),
                 Tables\Columns\TextColumn::make('status'),
-
+                Tables\Columns\TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->label('Submitted at'),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])
