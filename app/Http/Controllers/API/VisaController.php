@@ -11,10 +11,16 @@ class VisaController extends Controller
 {
     public function destinations(Request $request)
     {
-        $perPage = $request->input('per_page', 9); // default to 10 per page
-        $destinations = Destination::select('id', 'name', 'code', 'flag')->paginate($perPage);
-    
-        return response()->json($destinations);
+        $query = Destination::select('id', 'name', 'code', 'flag');
+        
+        // If paginate=false is passed, return all destinations (useful for select fields)
+        if ($request->input('paginate') === 'false') {
+            return response()->json(['data' => $query->get()]);
+        }
+
+        // Otherwise return paginated results
+        $perPage = $request->input('per_page', 9);
+        return response()->json($query->paginate($perPage));
     }
 
     public function visasTypes($id)
