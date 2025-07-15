@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use App\Models\PaymentsDeptsHistorique;
 
 class VisaApplicationResource extends Resource
 {
@@ -46,13 +47,28 @@ class VisaApplicationResource extends Resource
                     ->required()
                     ->maxLength(255),
                 Forms\Components\Select::make('status')
-                    ->options([
-                        'pending' => 'Pending',
-                        'approved' => 'Approved',
-                        'rejected' => 'Rejected',
-                        'action_required' => 'Action Required',
-
-                    ])->reactive(),
+                    ->options(function ($get, $record) {
+                        $options = [
+                            'pending' => 'Pending',
+                            'processing' => 'Processing',
+                            'approved' => 'Approved',
+                            'rejected' => 'Rejected',
+                            'action_required' => 'Action Required',
+                        ];
+                        // If the record exists and is not pending, remove 'pending' from options
+                        if ($record && $record->status !== 'pending') {
+                            unset($options['pending']);
+                        }
+                        return $options;
+                    })
+                    ->reactive()
+                    ->required()
+                    ->disablePlaceholderSelection()
+                    ->afterStateHydrated(function ($set, $record) {
+                        if ($record && $record->status !== 'pending') {
+                            $set('status', $record->status);
+                        }
+                    }),
 
                 Forms\Components\FileUpload::make('visa_file')
                     ->label('Upload Visa')

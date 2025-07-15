@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
             $table->float('amount');
             $table->enum('type', ['payment', 'debt']);
-            $table->float('note');
+            $table->string('note')->nullable(); // or $table->text('note')->nullable();
             $table->timestamps();
         });
     }
