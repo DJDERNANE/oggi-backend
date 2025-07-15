@@ -13,6 +13,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\HtmlString;
 
 class UserResource extends Resource
 {
@@ -37,6 +38,15 @@ class UserResource extends Resource
                 Forms\Components\DatePicker::make('phone_verified_at'),
                 Forms\Components\TextInput::make('payments')->label('Total Payments')->disabled(),
                 Forms\Components\TextInput::make('debts')->label('Total Debts')->disabled(),
+                Forms\Components\Placeholder::make('balance')
+                ->label('Balance')
+                ->content(function ($record) {
+                    $balance = ($record->payments ?? 0) - ($record->debts ?? 0);
+                    $color = $balance < 0 ? '#dc2626' : '#16a34a';
+                    return new HtmlString("<span style='color: $color; font-weight: bold;'>" . abs($balance) . "</span>");
+                })
+                ->extraAttributes(['style' => 'font-size: 1.2em;'])
+                ->columnSpanFull(),
                 Forms\Components\DateTimePicker::make('last_payment_time')->label('Last Payment Time')->disabled(),
                 Forms\Components\DateTimePicker::make('last_debt_time')->label('Last Debt Time')->disabled(),
             ]);
@@ -49,13 +59,14 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('name'),
                 Tables\Columns\TextColumn::make('email'),
                 Tables\Columns\TextColumn::make('phone'),
-                Tables\Columns\BadgeColumn::make('balance')
+                Tables\Columns\TextColumn::make('balance')
                     ->label('Balance')
-                    ->getStateUsing(fn($record) => ($record->payments ?? 0) - ($record->debts ?? 0))
-                    ->colors([
-                        'success' => fn($state) => $state >= 0,
-                        'danger' => fn($state) => $state < 0,
-                    ])
+                    ->html()
+                    ->getStateUsing(function($record) {
+                        $balance = ($record->payments ?? 0) - ($record->debts ?? 0);
+                        $color = $balance < 0 ? '#dc2626' : '#16a34a';
+                        return new \Illuminate\Support\HtmlString("<span style='color: $color; font-weight: bold;'>" . abs($balance) . "</span>");
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('visaApplications.count')
                 ->label('Pending Visa Applications')
