@@ -27,6 +27,10 @@ class User extends Authenticatable
         'email_verified_at',
         'phone_verified_at',
         'steps',
+        'payments',
+        'debts',
+        'last_payment_time',
+        'last_debt_time',
     ];
 
     /**
@@ -49,6 +53,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_payment_time' => 'datetime',
+            'last_debt_time' => 'datetime',
         ];
     }
 
@@ -61,5 +67,10 @@ class User extends Authenticatable
     public function otpCodes()
     {
         return $this->hasMany(OtpCode::class);
+    }
+
+    public function paymentsDeptsHistoriques()
+    {
+        return $this->hasMany(PaymentsDeptsHistorique::class);
     }
 }
