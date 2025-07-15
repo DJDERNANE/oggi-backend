@@ -46,8 +46,18 @@ class PaymentsDeptsHistoriquesResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('user.name')->label('User'),
-                Tables\Columns\TextColumn::make('amount')->sortable(),
-                Tables\Columns\TextColumn::make('type')->sortable(),
+                Tables\Columns\BadgeColumn::make('amount')
+                    ->colors([
+                        'danger' => fn($record) => $record->type === 'debt',
+                        'success' => fn($record) => $record->type === 'payment',
+                    ])
+                    ->sortable(),
+                Tables\Columns\BadgeColumn::make('type')
+                    ->colors([
+                        'danger' => 'debt',
+                        'success' => 'payment',
+                    ])
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('note')->sortable(),
                 Tables\Columns\TextColumn::make('created_at')->dateTime()->sortable(),
                 Tables\Columns\TextColumn::make('updated_at')->dateTime()->sortable(),

@@ -35,10 +35,10 @@ class UserResource extends Resource
                     ->maxLength(255),
                 Forms\Components\DateTimePicker::make('email_verified_at'),
                 Forms\Components\DatePicker::make('phone_verified_at'),
-                Forms\Components\TextInput::make('payments')->numeric()->nullable(),
-                Forms\Components\TextInput::make('debts')->numeric()->nullable(),
-                Forms\Components\DateTimePicker::make('last_payment_time')->nullable(),
-                Forms\Components\DateTimePicker::make('last_debt_time')->nullable(),
+                Forms\Components\TextInput::make('payments')->label('Total Payments')->disabled(),
+                Forms\Components\TextInput::make('debts')->label('Total Debts')->disabled(),
+                Forms\Components\DateTimePicker::make('last_payment_time')->label('Last Payment Time')->disabled(),
+                Forms\Components\DateTimePicker::make('last_debt_time')->label('Last Debt Time')->disabled(),
             ]);
     }
 
@@ -49,10 +49,14 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('name'),
                 Tables\Columns\TextColumn::make('email'),
                 Tables\Columns\TextColumn::make('phone'),
-                Tables\Columns\TextColumn::make('payments')->sortable(),
-                Tables\Columns\TextColumn::make('debts')->sortable(),
-                Tables\Columns\TextColumn::make('last_payment_time')->dateTime()->sortable(),
-                Tables\Columns\TextColumn::make('last_debt_time')->dateTime()->sortable(),
+                Tables\Columns\BadgeColumn::make('balance')
+                    ->label('Balance')
+                    ->getStateUsing(fn($record) => ($record->payments ?? 0) - ($record->debts ?? 0))
+                    ->colors([
+                        'success' => fn($state) => $state >= 0,
+                        'danger' => fn($state) => $state < 0,
+                    ])
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('visaApplications.count')
                 ->label('Pending Visa Applications')
             ])
