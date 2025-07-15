@@ -26,6 +26,7 @@ class EditVisaApplication extends EditRecord
             $user = $record->user;
             if ($user) {
                 $user->debts = ($user->debts ?? 0) + ($record->price ?? 0);
+                $user->last_debt_time = now();
                 $user->save();
                 PaymentsDeptsHistorique::create([
                     'user_id' => $user->id,

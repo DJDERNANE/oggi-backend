@@ -72,7 +72,8 @@ class UserResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\VisaApplicationRelationManager::class
+            RelationManagers\VisaApplicationRelationManager::class,
+            RelationManagers\PaymentsDeptsHistoriqueRelationManager::class,
         ];
     }
 
