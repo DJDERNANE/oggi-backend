@@ -23,8 +23,11 @@ class VisaApplicationObserver
      */
     public function updated(VisaApplication $visaApplication): void
     {
-           // Check if 'status' field was changed
-           if ($visaApplication->isDirty('status')) {
+        $oldStatus = $visaApplication->getOriginal('status');
+        $newStatus = $visaApplication->status;
+        $userEmail = optional($visaApplication->user)->email;
+        // Check if 'status' field was changed
+        if ($visaApplication->isDirty('status')) {
             Log::info('Visa status changed', [
                 'visa_id' => $visaApplication->id,
                 'old_status' => $visaApplication->getOriginal('status'),
@@ -32,8 +35,26 @@ class VisaApplicationObserver
                 'user_email' => optional($visaApplication->user)->email,
             ]);
             // Send email if user has an email
-            if ($visaApplication->user && $visaApplication->user->email) {
-                Mail::to($visaApplication->user->email)->send(new VisaStatusUpdated($visaApplication));
+            // Send email if user has an email
+            if ($userEmail) {
+                Log::info("Preparing to send visa status update email to: {$userEmail}");
+
+                try {
+                    Mail::to($userEmail)->send(new VisaStatusUpdated($visaApplication));
+
+                    Log::info("Visa status update email successfully sent to: {$userEmail}", [
+                        'visa_id' => $visaApplication->id,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error("Failed to send visa status update email to: {$userEmail}", [
+                        'visa_id' => $visaApplication->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            } else {
+                Log::warning("User has no email. Cannot send visa status update notification.", [
+                    'visa_id' => $visaApplication->id,
+                ]);
             }
         }
     }

@@ -8,9 +8,9 @@ use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
 use App\Models\VisaApplication;
-use Illuminate\Contracts\Queue\ShouldQueue;
 
-class VisaStatusUpdated extends Mailable implements ShouldQueue
+
+class VisaStatusUpdated extends Mailable 
 {
     use Queueable, SerializesModels;
 
@@ -31,7 +31,7 @@ class VisaStatusUpdated extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'emails.visa-status-updated',
+            view: 'mail.visa-status-updated',
             with: [
                 'status' => $this->visa->status,
                 'name' => $this->visa->name,

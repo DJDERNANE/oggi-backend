@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\VisaApplicationResource\Pages;
 use App\Filament\Resources\VisaApplicationResource\RelationManagers;
 use App\Models\VisaApplication;
+use App\Models\Destination;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -98,24 +99,23 @@ class VisaApplicationResource extends Resource
                     ->required()->visible(fn($get) => $get('status') === 'action_required'),
 
                 Forms\Components\TextInput::make('price'),
-                Forms\Components\TextInput::make('destination_name')
-                    ->disabled()
-                    ->afterStateHydrated(function ($set, $record) {
-                        if ($record && $record->visaType && $record->visaType->destination) {
-                            $set('destination_name', $record->visaType->destination->name);
-                        }
-                    }),
-
-                Forms\Components\Select::make('visa_type_id')
-                    ->label('Visa Type')
-                    ->relationship('visaType', 'name')
+                Forms\Components\Select::make('destination_name')
+                    ->label('Destination')
+                    ->options(fn () => Destination::pluck('name', 'name')->toArray())
                     ->searchable()
                     ->preload()
-                    ->reactive() // Ensures dynamic updates
-                    ->afterStateUpdated(fn($set, $state) => $set(
-                        'destination_name',
-                        \App\Models\VisaType::find($state)?->destination?->name
-                    ))
+                    ->reactive()
+                    ->required(),
+
+                    Forms\Components\Select::make('visa_type_id')
+                    ->label('Visa Type')
+                    ->relationship(
+                        'visaType',
+                        'name',
+                        fn ($query, $get) => $query->whereHas('destination', fn ($q) => $q->where('name', $get('destination_name')))
+                    )
+                    ->searchable()
+                    ->preload()
                     ->required(),
 
 
