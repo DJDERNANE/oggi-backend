@@ -71,10 +71,10 @@ class VisaApplicationResource extends Resource
                     }),
 
                 Forms\Components\FileUpload::make('visa_file')
-                    ->label('Upload Visa')
+                    ->label('Upload file')
                     ->directory('visas') // stored in storage/app/visas
                     ->disk('public') // optional: default disk
-                    ->visible(fn($get) => $get('status') === 'approved'),
+                    ->visible(fn($get) => in_array($get('status'), ['approved', 'rejected'])),
                 // Repeater for dynamic document key-value pairs
                 Repeater::make('required_documents')
                     ->schema([
