@@ -70,6 +70,13 @@ class VisaApplicationResource extends Resource
                         }
                     }),
 
+                Forms\Components\Select::make('user_id')
+                    ->label('User')
+                    ->relationship('user', 'name') // assumes User model has 'name'
+                    ->searchable()
+                    ->preload()
+                    ->required(),
+
                 Forms\Components\FileUpload::make('visa_file')
                     ->label('Upload file')
                     ->directory('visas') // stored in storage/app/visas
@@ -101,11 +108,7 @@ class VisaApplicationResource extends Resource
 
                 Forms\Components\Select::make('visa_type_id')
                     ->label('Visa Type')
-                    ->relationship(
-                        'visaType',
-                        'name',
-                        fn($query, $get) => $query->whereHas('destination', fn($q) => $q->where('name', $get('destination_name'))) // Filter by destination name
-                    )
+                    ->relationship('visaType', 'name')
                     ->searchable()
                     ->preload()
                     ->reactive() // Ensures dynamic updates
@@ -114,9 +117,6 @@ class VisaApplicationResource extends Resource
                         \App\Models\VisaType::find($state)?->destination?->name
                     ))
                     ->required(),
-
-
-
 
 
             ]);

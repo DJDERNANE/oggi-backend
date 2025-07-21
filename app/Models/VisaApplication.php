@@ -4,7 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
+use App\Observers\VisaApplicationObserver;
 
+#[ObservedBy([VisaApplicationObserver::class])]
 class VisaApplication extends Model
 {
     use HasFactory;
