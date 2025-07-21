@@ -62,6 +62,7 @@ class VisaApplicationResource extends Resource
                         }
                         return $options;
                     })
+                    ->default('pending') // <-- Add this line
                     ->reactive()
                     ->required()
                     ->disablePlaceholderSelection()
