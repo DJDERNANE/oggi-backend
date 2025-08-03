@@ -111,14 +111,14 @@ class AuthController extends Controller
                         } else {
                             $otpCode = OtpCode::where('user_id', $user->id)->first();
                             if ($otpCode->email_code == $request->otp && $otpCode->email_expires_at > now()) {
-                                $user->steps = "step2";
+                                $user->steps = "step5";
                                 $user->email_verified_at = now();
                                 $user->save();
                                 $otpCode->delete();
                                 return response()->json([
                                     'user' => $user,
                                     'message' => 'Email verified successfully',
-                                    'next_step' => 3,
+                                    'next_step' => 5,
                                 ], 200);
                             } else {
                                 return response()->json([
