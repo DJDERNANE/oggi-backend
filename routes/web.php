@@ -20,8 +20,7 @@ Route::get('/storage/link', function () {
 });
 
 
-
-Route::get('/login', function () {
+Route::get('/', function () {
     return response()->json(['message' => 'Login page']);
 })->name('login');
 Route::get('/visa/download', [VisaApplicationController::class, 'download'])->name('visa.download');
