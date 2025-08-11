@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\OtpSent;
 use App\Models\UserDoc;
+use App\Mail\PasswordResetLink;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -111,14 +113,14 @@ class AuthController extends Controller
                         } else {
                             $otpCode = OtpCode::where('user_id', $user->id)->first();
                             if ($otpCode->email_code == $request->otp && $otpCode->email_expires_at > now()) {
-                                $user->steps = "step5";
+                                $user->steps = "step2";
                                 $user->email_verified_at = now();
                                 $user->save();
                                 $otpCode->delete();
                                 return response()->json([
                                     'user' => $user,
                                     'message' => 'Email verified successfully',
-                                    'next_step' => 5,
+                                    'next_step' => 3,
                                 ], 200);
                             } else {
                                 return response()->json([
@@ -152,7 +154,8 @@ class AuthController extends Controller
                             ], 422);
                         } else {
                             $user->phone = $request->phone;
-                            $user->steps = "step3";
+                            $user->phone_verified_at = now();
+                            $user->steps = "step4";
                             $user->save();
 
                             // generate otp code 
@@ -173,7 +176,7 @@ class AuthController extends Controller
                             return response()->json([
                                 'user' => $user,
                                 'message' => 'Registration completed successfully',
-                                'next_step' => 4,
+                                'next_step' => 5,
                             ], 200);
                         }
                     } else {
@@ -410,4 +413,213 @@ class AuthController extends Controller
         $token = $request->user()->createToken('authToken')->accessToken;
         return response()->json(['token' => $token]);
     }
+
+     public function getUserInfo(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'error' => 'User not authenticated',
+                ], 401);
+            }
+
+            // Load any additional relationships if needed
+            $user->load('documents');
+
+            return response()->json([
+                'user' => $user,
+                'documents' => $user->documents
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'Failed to fetch user information',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateProfile(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'error' => 'User not authenticated',
+                ], 401);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'name' => 'sometimes|string|max:255',
+                'phone' => 'sometimes|string|regex:/^([0-9\s\+\-\(\)]+)$/|unique:users,phone,'.$user->id,
+                'company' => 'sometimes|string|max:255',
+                'bio' => 'sometimes|string|max:500',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'error' => 'Validation error',
+                    'messages' => $validator->errors(),
+                ], 422);
+            }
+
+            $user->update($request->only(['name', 'phone', 'company', 'bio']));
+
+            return response()->json([
+                'message' => 'Profile updated successfully',
+                'user' => $user
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'Failed to update profile',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+     public function sendPasswordResetLink(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email|exists:users,email',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'error' => 'Validation error',
+                    'messages' => $validator->errors(),
+                ], 422);
+            }
+
+            $user = User::where('email', $request->email)->first();
+
+            // Generate reset token
+            $token = Str::random(60);
+            $user->password_reset_token = $token;
+            $user->password_reset_token_expires_at = now()->addHours(1);
+            $user->save();
+
+            // Send email with reset link
+            Mail::to($user->email)->send(new PasswordResetLink($user, $token));
+
+            return response()->json([
+                'message' => 'Password reset link sent to your email',
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'Failed to send reset link',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Reset password with token
+     */
+    public function resetPassword(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email|exists:users,email',
+                'token' => 'required|string',
+                'password' => 'required|string|min:8|confirmed',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'error' => 'Validation error',
+                    'messages' => $validator->errors(),
+                ], 422);
+            }
+
+            $user = User::where('email', $request->email)
+                      ->where('password_reset_token', $request->token)
+                      ->where('password_reset_token_expires_at', '>', now())
+                      ->first();
+
+            if (!$user) {
+                return response()->json([
+                    'error' => 'Invalid or expired reset token',
+                ], 422);
+            }
+
+            // Update password and clear token
+            $user->password = Hash::make($request->password);
+            $user->password_reset_token = null;
+            $user->password_reset_token_expires_at = null;
+            $user->save();
+
+            // Revoke all tokens (optional)
+            $user->tokens()->delete();
+
+            return response()->json([
+                'message' => 'Password reset successfully',
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'Failed to reset password',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Change password (for authenticated users)
+     */
+    public function changePassword(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'error' => 'User not authenticated',
+                ], 401);
+            }
+
+            $validator = Validator::make($request->all(), [
+                'current_password' => 'required|string',
+                'new_password' => 'required|string|min:8|different:current_password',
+                'confirm_password' => 'required|string|same:new_password',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'error' => 'Validation error',
+                    'messages' => $validator->errors(),
+                ], 422);
+            }
+
+            // Verify current password
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json([
+                    'error' => 'Current password is incorrect',
+                ], 422);
+            }
+
+            // Update password
+            $user->password = Hash::make($request->new_password);
+            $user->save();
+
+            // Revoke all tokens (optional)
+            $user->tokens()->delete();
+
+            return response()->json([
+                'message' => 'Password changed successfully',
+            ], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'error' => 'Failed to change password',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 }

@@ -27,6 +27,10 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get("/my-docs/temporary", [UserDocsController::class, 'temporaryUserDocs']);
     Route::post("/my-docs", [UserDocsController::class, 'updateUserDoc']);
     Route::get("/my-docs/download", [UserDocsController::class, 'zipAndDownload']);
+
+    Route::get('/user', [AuthController::class, 'getUserInfo']);
+    Route::put('/profile', [AuthController::class, 'updateProfile']);
+    Route::post('/change-password', [AuthController::class, 'changePassword']);
 });
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -37,3 +41,5 @@ Route::get('/destinations', [VisaController::class, 'destinations']);
 Route::post('/destinations/total', [VisaController::class, 'totalVisaPrice']);
 Route::post('/destinations/passengers', [VisaController::class, 'PassengersVisasInfo']);
 Route::get('/destinations/{id}/visas', [VisaController::class, 'visasTypes']);
+Route::post('/send-reset-link', [AuthController::class, 'sendPasswordResetLink']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
