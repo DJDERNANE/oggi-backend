@@ -426,11 +426,11 @@ class AuthController extends Controller
             }
 
             // Load any additional relationships if needed
-            $user->load('documents');
+            // $user->load('documents');
 
             return response()->json([
                 'user' => $user,
-                'documents' => $user->documents
+                // 'documents' => $user->documents
             ], 200);
 
         } catch (Exception $e) {
