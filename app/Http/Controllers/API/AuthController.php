@@ -455,8 +455,7 @@ class AuthController extends Controller
             $validator = Validator::make($request->all(), [
                 'name' => 'sometimes|string|max:255',
                 'phone' => 'sometimes|string|regex:/^([0-9\s\+\-\(\)]+)$/|unique:users,phone,'.$user->id,
-                'company' => 'sometimes|string|max:255',
-                'bio' => 'sometimes|string|max:500',
+                'email' => 'sometimes|email|unique:users,email,'.$user->id,
             ]);
 
             if ($validator->fails()) {
@@ -466,7 +465,7 @@ class AuthController extends Controller
                 ], 422);
             }
 
-            $user->update($request->only(['name', 'phone', 'company', 'bio']));
+            $user->update($request->only(['name', 'phone', 'email']));
 
             return response()->json([
                 'message' => 'Profile updated successfully',

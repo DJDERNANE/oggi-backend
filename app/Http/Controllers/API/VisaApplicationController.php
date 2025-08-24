@@ -107,5 +107,22 @@ class VisaApplicationController extends Controller
         }
     }
 
+    public function getAcceptedVisasCount()
+{
+    $user = auth()->user();
+
+    if (!$user) {
+        return response()->json(["message" => "Unauthorized"], 401);
+    }
+
+    $acceptedVisasCount = VisaApplication::where('user_id', $user->id)
+        ->where('status', 'approved')
+        ->count();
+
+    return response()->json([
+        "accepted_visas_count" => $acceptedVisasCount
+    ]);
+}
+
     
 }

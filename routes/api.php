@@ -18,6 +18,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post('/visa-applications', [VisaApplicationController::class, 'store']);
     Route::get('/visa-applications', [VisaApplicationController::class, 'index']);
     Route::get("/my-visas", [VisaApplicationController::class, 'myVisas']);
+    Route::get("/my-visas/approved", [VisaApplicationController::class, 'getAcceptedVisasCount']);
     // Route::get('/visa-applications/{id}', [VisaApplicationController::class, 'show']);
     // Route::get('/visa-applications/{id}/files', [VisaAplicationFileController::class, 'index']);
     // Route::post('/visa-applications/{id}/files', [VisaAplicationFileController::class, 'store']);

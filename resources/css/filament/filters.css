@@ -1,0 +1,25 @@
+/* Increase filter container width */
+.filters-form {
+    width: 800px !important;
+    max-width: 90vw !important;
+}
+
+/* Arrange filters in multiple columns */
+.filters-form > div {
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 1rem !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .filters-form > div {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .filters-form > div {
+        grid-template-columns: 1fr !important;
+    }
+}
