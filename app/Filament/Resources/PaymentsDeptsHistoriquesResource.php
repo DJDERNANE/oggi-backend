@@ -52,7 +52,7 @@ class PaymentsDeptsHistoriquesResource extends Resource
                     'success' => fn($record) => $record->type === 'payment',
                 ])
                 ->sortable()
-                ->money('USD'),
+                ->money('DZD'),
             Tables\Columns\BadgeColumn::make('type')
                 ->colors([
                     'danger' => 'debt',

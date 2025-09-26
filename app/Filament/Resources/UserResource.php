@@ -34,8 +34,6 @@ class UserResource extends Resource
                 Forms\Components\TextInput::make('phone')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\DateTimePicker::make('email_verified_at'),
-                Forms\Components\DatePicker::make('phone_verified_at'),
                 Forms\Components\TextInput::make('payments')->label('Total Payments')->disabled(),
                 Forms\Components\TextInput::make('debts')->label('Total Debts')->disabled(),
                 Forms\Components\Placeholder::make('balance')

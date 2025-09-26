@@ -6,6 +6,7 @@ use App\Filament\Resources\VisaApplicationResource\Pages;
 use App\Filament\Resources\VisaApplicationResource\RelationManagers;
 use App\Models\VisaApplication;
 use App\Models\Destination;
+use App\Models\VisaType;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -31,174 +32,142 @@ class VisaApplicationResource extends Resource
         return static::getModel()::query()->where('status', 'pending')->count();
     }
 
-public static function form(Form $form): Form
-{
-    return $form
-        ->schema([
-            // Visa Application Information
-            Forms\Components\Section::make('Visa Application Information')
-                ->schema([
-                    Forms\Components\TextInput::make('name')
-                        ->required()
-                        ->maxLength(255),
-                    Forms\Components\TextInput::make('fammily_name')
-                        ->required()
-                        ->maxLength(255),
-                    Forms\Components\TextInput::make('passport_number')
-                        ->required()
-                        ->maxLength(255),
-                    Forms\Components\DatePicker::make('departure_date')
-                        ->required()
-                        ->minDate(now()),
-                    Forms\Components\Select::make('status')
-                        ->options([
-                            'pending' => 'Pending',
-                            'processing' => 'Processing',
-                            'approved' => 'Approved',
-                            'rejected' => 'Rejected',
-                            'action_required' => 'Action Required',
-                        ])
-                        ->default('pending')
-                        ->reactive()
-                        ->required()
-                        ->disablePlaceholderSelection(),
-                ])
-                ->columns(2),
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                // Personal Information Section
+                Forms\Components\Section::make('Personal Information')
+                    ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->label('First Name')
+                            ->required()
+                            ->maxLength(255)
+                            ->placeholder('Enter first name'),
 
-            // User and Destination Information
-            Forms\Components\Section::make('User & Destination Details')
-                ->schema([
-                    Forms\Components\Select::make('user_id')
-                        ->label('User')
-                        ->relationship('user', 'name')
-                        ->searchable()
-                        ->preload()
-                        ->required()
-                        ->reactive(),
+                        Forms\Components\TextInput::make('fammily_name')
+                            ->label('Family Name')
+                            ->required()
+                            ->maxLength(255)
+                            ->placeholder('Enter family name'),
 
-                    Forms\Components\Select::make('destination_name')
-                        ->label('Destination')
-                        ->options(fn() => Destination::pluck('name', 'name')->toArray())
-                        ->searchable()
-                        ->preload()
-                        ->reactive()
-                        ->required()
-                        ->default(function () {
-                            return request('destination') ?? session('destination');
-                        })
-                        ->afterStateUpdated(function ($set) {
-                            $set('visa_type_id', null);
-                            $set('price', null);
-                        }),
+                        Forms\Components\TextInput::make('passport_number')
+                            ->label('Passport Number')
+                            ->required()
+                            ->maxLength(255)
+                            ->unique(ignoreRecord: true)
+                            ->placeholder('Enter passport number')
+                            ->alphanum(),
 
-                    Forms\Components\Select::make('visa_type_id')
-                        ->label('Visa Type')
-                        ->relationship('visaType', 'name')
-                        ->searchable()
-                        ->preload()
-                        ->required()
-                        ->default(function () {
-                            return request('visa_type') ?? session('visa_type');
-                        })
-                        ->getOptionLabelFromRecordUsing(fn (\App\Models\VisaType $record) => "{$record->name} - {$record->adult_price} USD")
-                        ->afterStateUpdated(function ($set, $state) {
-                            if ($state) {
-                                $visaType = \App\Models\VisaType::find($state);
-                                if ($visaType && $visaType->adult_price) {
-                                    $set('price', $visaType->adult_price);
+                        Forms\Components\DatePicker::make('departure_date')
+                            ->label('Departure Date')
+                            ->required()
+                            ->minDate(now())
+                            ->displayFormat('Y-m-d')
+                            ->native(false),
+                    ])
+                    ->columns(2),
+
+                // Application Details Section
+                Forms\Components\Section::make('Application Details')
+                    ->schema([
+                        Forms\Components\Select::make('user_id')
+                            ->label('Applicant')
+                            ->relationship('user', 'name')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('name')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('email')
+                                    ->email()
+                                    ->required()
+                                    ->maxLength(255),
+                            ]),
+
+                        Forms\Components\Select::make('visa_type_id')
+                            ->label('Visa Type')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->reactive()
+                            ->options(function () {
+                                return VisaType::with('destination')
+                                    ->get()
+                                    ->mapWithKeys(function ($visaType) {
+                                        $label = $visaType->destination
+                                            ? "{$visaType->destination->name} - {$visaType->name} ({$visaType->adult_price} DZD)"
+                                            : "{$visaType->name} ({$visaType->adult_price} DZD)";
+
+                                        return [$visaType->id => $label];
+                                    });
+                            })
+                            ->getOptionLabelFromRecordUsing(function (VisaType $record) {
+                                $destination = $record->destination;
+                                return $destination
+                                    ? "{$destination->name} - {$record->name} ({$record->adult_price} DZD)"
+                                    : "{$record->name} ({$record->adult_price} DZD)";
+                            })
+                            ->afterStateUpdated(function ($set, $state) {
+                                if ($state) {
+                                    $visaType = VisaType::find($state);
+                                    if ($visaType) {
+                                        $set('price', $visaType->adult_price);
+                                        if (!request()->filled('destination_id')) {
+                                            $set('destination_id', $visaType->destination_id);
+                                        }
+                                    }
+                                } else {
+                                    $set('price', 0);
                                 }
-                            }
-                        }),
+                            }),
 
-                    Forms\Components\TextInput::make('price')
-                        ->label('Visa Price (USD)')
-                        ->numeric()
-                        ->required()
-                        ->default(0)
-                        ->reactive()
-                        ->afterStateUpdated(function ($set, $state) {
-                            $set('payment_amount', $state);
-                        }),
-                ])
-                ->columns(2),
+                        Forms\Components\TextInput::make('price')
+                            ->label('Visa Price (DZD)')
+                            ->numeric()
+                            ->required()
+                            ->default(0)
+                            ->prefix('DZD')
+                            ->reactive()
+                            ->dehydrated(true),
 
-            // Payment Information Section
-            Forms\Components\Section::make('Payment Information')
-                ->schema([
-                    Forms\Components\Select::make('payment_method')
-                        ->options([
-                            'credit_card' => 'Credit Card',
-                            'debit_card' => 'Debit Card',
-                            'bank_transfer' => 'Bank Transfer',
-                            'cash' => 'Cash',
-                            'paypal' => 'PayPal',
-                            'other' => 'Other',
-                        ])
-                        ->default('cash')
-                        ->required()
-                        ->reactive(),
+                        Forms\Components\Select::make('status')
+                            ->label('Application Status')
+                            ->options([
+                                'pending' => 'Pending',
+                                'processing' => 'Processing',
+                                'approved' => 'Approved',
+                                'rejected' => 'Rejected',
+                                'action_required' => 'Action Required',
+                            ])
+                            ->default('pending')
+                            ->required()
+                            ->disablePlaceholderSelection()
+                            ->reactive(),
+                    ])
+                    ->columns(2),
+                
 
-                    Forms\Components\TextInput::make('payment_amount')
-                        ->label('Amount Paid (USD)')
-                        ->numeric()
-                        ->required()
-                        ->minValue(0)
-                        ->default(function ($get) {
-                            return $get('price') ?? 0;
-                        }),
+            ]);
 
-                    Forms\Components\Select::make('payment_type')
-                        ->options([
-                            'payment' => 'Payment',
-                            'debt' => 'Debt',
-                        ])
-                        ->default('payment')
-                        ->required(),
+        // Also add this method to your Resource class (EditVisaApplication or VisaApplicationResource)
 
-                    Forms\Components\DatePicker::make('payment_date')
-                        ->label('Payment Date')
-                        ->default(now())
-                        ->required(),
+    }
+    public function mutateFormDataBeforeFill(array $data): array
+    {
+        // Set destination_id from the visa type relationship if not already set
+        if (!isset($data['destination_id']) && isset($data['visa_type_id'])) {
+            $visaType = VisaType::find($data['visa_type_id']);
+            if ($visaType) {
+                $data['destination_id'] = $visaType->destination_id;
+            }
+        }
 
-                    Forms\Components\TextInput::make('transaction_id')
-                        ->label('Transaction ID')
-                        ->maxLength(255)
-                        ->required()
-                        ->visible(fn($get) => $get('payment_method') !== 'cash'),
+        return $data;
+    }
 
-                    Forms\Components\Textarea::make('payment_note')
-                        ->label('Payment Notes')
-                        ->rows(2)
-                        ->columnSpanFull()
-                        ->placeholder('Additional payment information...'),
-                ])
-                ->columns(2),
-
-            // Documents Section
-            Forms\Components\Section::make('Documents')
-                ->schema([
-                    Forms\Components\FileUpload::make('visa_file')
-                        ->label('Upload Visa File')
-                        ->directory('visas')
-                        ->disk('public')
-                        ->visible(fn($get) => in_array($get('status'), ['approved', 'rejected'])),
-
-                    Forms\Components\Repeater::make('required_documents')
-                        ->schema([
-                            Forms\Components\TextInput::make('document_name')
-                                ->label('Document Name')
-                                ->required(),
-
-                            Forms\Components\Toggle::make('required')
-                                ->label('Required')
-                                ->default(false),
-                        ])
-                        ->addActionLabel('Add Document')
-                        ->collapsible()
-                        ->visible(fn($get) => $get('status') === 'action_required'),
-                ]),
-        ]);
-}
     public static function table(Table $table): Table
     {
         return $table
